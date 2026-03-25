@@ -1,0 +1,25 @@
+{
+  "name": "gameday",
+  "version": "4.0.0",
+  "description": "Organisateur de journées jeux de société",
+  "license": "AGPL-3.0",
+  "author": "pandagaming.ch",
+  "scripts": {
+    "start": "node server.js",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^9.4.3",
+    "connect-sqlite3": "^0.9.13",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "node-fetch": "^2.7.0",
+    "nodemailer": "^6.9.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0"
+  }
+}

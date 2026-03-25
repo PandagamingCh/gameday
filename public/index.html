@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GameDay</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</style>
+</head>
+<body>
+<div id="toast" class="toast"></div>
+
+<!-- ── MODALS ── -->
+<div class="modal-overlay" id="newSessionModal">
+  <div class="modal">
+    <div class="modal-title">🗓 Nouvelle séance</div>
+    <div class="form-group"><label class="form-label">Nom</label><input class="form-input" id="nsName" placeholder="ex: Journée jeux du 14 juillet"></div>
+    <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="nsDate"></div>
+    <div id="nsPrivateSection" style="display:none;margin-top:4px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82rem;margin-bottom:8px">
+        <input type="checkbox" id="nsPrivate" onchange="document.getElementById('nsMembersWrap').style.display=this.checked?'block':'none'">
+        <span>🔒 Séance privée</span>
+      </label>
+      <div id="nsMembersWrap" style="display:none">
+        <div class="form-label" style="margin-bottom:6px">Participants autorisés</div>
+        <div id="nsMembers" class="priv-members-list"></div>
+        <div style="font-size:.68rem;color:var(--text-muted);margin-top:4px">Vous êtes toujours inclus automatiquement</div>
+      </div>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82rem;margin:8px 0">
+      <input type="checkbox" id="nsNoJoin">
+      <span>Ne pas me joindre à cette séance</span>
+    </label>
+    <div class="modal-btns">
+      <button class="btn-sm ghost" onclick="closeModal('newSessionModal')">Annuler</button>
+      <button class="btn-sm accent" onclick="createSession()">Créer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="editCatModal">
+  <div class="modal">
+    <div class="modal-title">✎ Modifier la catégorie</div>
+    <input type="hidden" id="ecCatId">
+    <div class="form-group"><label class="form-label">Nom</label><input class="form-input" id="ecName"></div>
+    <div class="form-group"><label class="form-label">Emoji</label><input class="form-input" id="ecIcon" maxlength="4" style="max-width:80px"></div>
+    <div class="form-group"><label class="form-label">Sous-titre</label><input class="form-input" id="ecSub" placeholder="ex: 6+ joueurs"></div>
+    <div class="modal-btns">
+      <button class="btn-sm ghost" onclick="closeModal('editCatModal')">Annuler</button>
+      <button class="btn-sm accent" onclick="saveEditCat()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal édition proposition -->
+<div class="modal-overlay" id="editPropModal">
+  <div class="modal">
+    <div class="modal-title">✎ Modifier le jeu</div>
+    <input type="hidden" id="epId">
+    <div class="form-group"><label class="form-label">Nom *</label><input class="form-input" id="epName"></div>
+    <div class="form-group"><label class="form-label">Année</label><input class="form-input" id="epYear" placeholder="ex: 2019" style="max-width:90px"></div>
+    <div class="form-row" style="display:flex;gap:8px;align-items:flex-end">
+      <div class="form-group" style="flex:1"><label class="form-label">Joueurs</label><input class="form-input" id="epPlayers" placeholder="ex: 2-5"></div>
+      <div class="form-group" style="flex:1"><label class="form-label">Durée (min)</label><input class="form-input" id="epTime" placeholder="ex: 60-90"></div>
+      <div class="form-group" style="flex:0 0 110px"><label class="form-label">⏱ Teaching (min)</label><input class="form-input" type="number" id="epTeachDur" placeholder="ex: 15"></div>
+    </div>
+    <div class="form-group"><label class="form-label">URL BGG</label>
+      <div style="display:flex;gap:6px">
+        <input class="form-input" id="epBgg" placeholder="boardgamegeek.com/boardgame/XXXXX" style="flex:1">
+        <button class="btn-sm ghost" onclick="refreshProposalFromBGG()" title="Rafraîchir les infos depuis BGG">🔄</button>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">URL MyLudo</label><input class="form-input" id="epMyludo" placeholder="myludo.fr/#!/game/nom-12345"></div>
+    <div class="form-group" id="epRatingGroup" style="display:none"><label class="form-label">⭐ Note BGG</label><span id="epRating" style="font-size:.85rem;color:var(--accent);font-weight:700"></span><input type="hidden" id="epRatingVal"><span id="epWeightDisplay" style="font-size:.82rem;color:var(--text-muted);margin-left:12px"></span><input type="hidden" id="epWeightVal"></div>
+    <div class="form-group">
+      <label class="form-label">🎓 Teacher (optionnel)</label>
+      <select class="form-input" id="epTeacher">
+        <option value="">— Personne (jeu connu de tous)</option>
+      </select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-sm ghost" onclick="closeModal('editPropModal')">Annuler</button>
+      <button class="btn-sm accent" onclick="saveEditProposal()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAGES ── -->
+
+<!-- LOGIN -->
+<div id="page-login" class="page">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">Game<em>Day</em></div>
+      <div class="auth-title">Connexion</div>
+      <div class="auth-err" id="loginErr"></div>
+      <form onsubmit="event.preventDefault();doLogin()" autocomplete="on">
+      <div class="form-group"><label class="form-label">Pseudo</label><input class="form-input" id="loginUser" placeholder="Votre pseudo" autocomplete="username"></div>
+      <div class="form-group"><label class="form-label">Mot de passe</label><input type="password" class="form-input" id="loginPass" placeholder="••••••" autocomplete="current-password"></div>
+      <button type="submit" class="btn-full">Se connecter</button>
+      </form>
+      <div class="auth-link" id="forgotPasswordLink" style="display:none;margin-top:8px">
+        <a onclick="showPage('page-forgot-password')" style="font-size:.75rem;color:var(--text-muted);cursor:pointer">Mot de passe oublié ?</a>
+      </div>
+      <div class="auth-link">Pas encore de compte ? <a onclick="showPage('page-register')">S'inscrire avec un lien d'invitation</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- FORGOT PASSWORD -->
+<div id="page-forgot-password" class="page">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">Game<em>Day</em></div>
+      <div class="auth-title">Mot de passe oublié</div>
+      <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:16px">Entrez votre adresse email — vous recevrez un lien pour réinitialiser votre mot de passe.</div>
+      <div id="forgotMsg"></div>
+      <form onsubmit="event.preventDefault();doForgotPassword()" autocomplete="on">
+        <div class="form-group"><label class="form-label">Adresse email</label><input type="email" class="form-input" id="forgotEmail" placeholder="votre@email.com" autocomplete="email"></div>
+        <button type="submit" class="btn-full" id="forgotBtn">Envoyer le lien</button>
+      </form>
+      <div class="auth-link"><a onclick="showPage('page-login')" style="cursor:pointer">← Retour à la connexion</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- REGISTER -->
+<div id="page-register" class="page">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">Game<em>Day</em></div>
+      <div class="auth-title">Créer un compte</div>
+      <div class="auth-err" id="registerErr"></div>
+      <form onsubmit="event.preventDefault();doRegister()" autocomplete="on">
+      <div class="form-group"><label class="form-label">Code d'invitation</label><input class="form-input" id="regInvite" placeholder="Collez votre lien ou code ici" autocomplete="off"></div>
+      <div class="form-group"><label class="form-label">Pseudo</label><input class="form-input" id="regUser" placeholder="Votre prénom ou pseudo" autocomplete="username"></div>
+      <div class="form-group"><label class="form-label">Mot de passe</label><input type="password" class="form-input" id="regPass" placeholder="6 caractères minimum" autocomplete="new-password"></div>
+      <div class="form-group"><label class="form-label">Pseudo BoardGameGeek <span style="color:var(--text-muted)">(optionnel)</span></label><input class="form-input" id="regBGG" placeholder="Votre pseudo BGG pour importer vos jeux" autocomplete="off"><div class="form-hint">Laissez vide si vous n'avez pas de compte BGG</div></div>
+      <button type="submit" class="btn-full" id="regBtn">Créer mon compte</button>
+      </form>
+      <div class="auth-link">Déjà inscrit ? <a onclick="showPage('page-login')">Se connecter</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- HOME (sessions list) -->
+<!-- GLOBAL NAV -->
+<nav id="global-nav" style="display:none;position:sticky;top:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border)">
+  <div class="container" style="padding-top:0;padding-bottom:0">
+    <div class="header-inner">
+      <div class="logo" onclick="showPage('page-home')" style="cursor:pointer">Game<em>Day</em></div>
+      <div class="header-right">
+        <div class="user-chip"><span>👤</span><span class="uname" id="navUsername"></span></div>
+        <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()" title="Changer le thème">🌙</button>
+        <button class="btn-sm ghost" id="navHome" onclick="showPage('page-home')">🏠 Accueil</button>
+        <button class="btn-sm ghost" id="navDoodle" onclick="showPage('page-doodle')">📅 Doodle</button>
+        <button class="btn-sm ghost" id="navStats" onclick="showPage('page-stats')">📊 Stats</button>
+        <button class="btn-sm ghost" id="navProfile" onclick="showPage('page-profile')">Profil</button>
+        <button class="btn-sm ghost" id="adminNavBtn" onclick="showPage('page-admin')" style="display:none">Admin</button>
+        <a class="btn-sm ghost" href="/manuel.html" target="_blank" title="Mode d'emploi">?</a>
+        <button class="btn-sm ghost" onclick="doLogout()">Déconnexion</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div id="page-home" class="page">
+  <div class="container">
+        <div class="section-label">Séances</div>
+    <div class="sessions-grid" id="sessionsGrid">
+      <div class="empty"><span class="empty-icon">🗓</span><div class="empty-label">Aucune séance</div></div>
+    </div>
+    <div class="new-session-btn" id="newSessionBtn" onclick="openNewSession()">+ Créer une nouvelle séance</div>
+    <div style="margin-top:28px">
+      <div class="archived-section-header" onclick="toggleArchivedSessions()">
+        <span class="archived-section-icon">📚</span>
+        <span class="archived-section-title">Sessions passées</span>
+        <span class="archived-section-chevron" id="archivedToggleIcon">▸</span>
+      </div>
+      <div id="archivedSessionsDiv" style="display:none;margin-top:12px">
+        <div class="sessions-grid" id="archivedGrid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SESSION -->
+<div id="page-session" class="page">
+  <div class="container">
+        <div class="session-header">
+      <div class="session-title" id="sessTitle"></div>
+      <div class="session-sub">
+        <span id="sessDate"></span>
+        <span id="sessCreator"></span>
+        <span id="sessStatus"></span>
+      </div>
+    </div>
+    <div class="session-mgmt" id="sessMgmt" style="display:none"></div>
+    <div class="participants-row" id="sessParticipants"></div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('propose',this)">Proposer</button>
+      <button class="tab" onclick="switchTab('vote',this)">Voter</button>
+      <button class="tab" onclick="switchTab('results',this)">Résultats</button>
+      <button class="tab" onclick="switchTab('programme',this)">🤖 Programme</button>
+      <button class="tab" onclick="switchTab('archive',this)">📚 Archive</button>
+    </div>
+    <div id="panel-propose" class="panel active"></div>
+    <div id="panel-vote" class="panel"></div>
+    <div id="panel-results" class="panel"></div>
+    <div id="panel-programme" class="panel"></div>
+    <div id="panel-archive" class="panel"></div>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div id="page-profile" class="page">
+  <div class="container">
+        <div class="profile-card">
+      <div class="profile-title">Mon profil</div>
+      <div class="form-group">
+        <label class="form-label">Pseudo</label>
+        <div style="display:flex;gap:6px">
+          <input class="form-input" id="profUsername" placeholder="Votre pseudo">
+          <button class="btn-sm accent" onclick="changeUsername()">Changer</button>
+        </div>
+        <div id="usernameErr" style="font-size:.72rem;color:#e05;margin-top:4px;display:none"></div>
+      </div>
+      <div class="form-group bgg-feature">
+        <label class="form-label">Pseudo BoardGameGeek</label>
+        <input class="form-input" id="profBGG" placeholder="Votre pseudo BGG">
+        <div class="bgg-sync-row">
+          <button class="btn-sm accent" onclick="saveBGG()">Enregistrer & synchroniser</button>
+          <button class="btn-sm ghost" onclick="manualSync()" id="syncBtn">🔄 Sync maintenant</button>
+          <span class="sync-status" id="syncStatus"></span>
+        </div>
+      </div>
+      <div class="form-group" id="emailFieldGroup" style="display:none">
+        <label class="form-label">Adresse email</label>
+        <div style="display:flex;gap:6px">
+          <input class="form-input" id="profEmail" placeholder="votre@email.com" type="email">
+          <button class="btn-sm accent" onclick="saveProfileEmail()">Enregistrer</button>
+        </div>
+        <div style="font-size:.7rem;color:var(--text-muted);margin-top:4px">Utilisée pour la réinitialisation du mot de passe.</div>
+        <div id="emailErr" style="font-size:.72rem;color:#e05;margin-top:4px;display:none"></div>
+      </div>
+      <div class="form-group" style="margin-top:16px">
+        <label class="form-label">Changer le mot de passe</label>
+        <form onsubmit="event.preventDefault();saveNewPassword()" autocomplete="on"><input type="password" class="form-input" id="profNewPass" placeholder="Nouveau mot de passe" style="margin-bottom:8px" autocomplete="new-password"></form>
+        <button class="btn-sm accent" onclick="changePassword()">Changer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="page-admin" class="page">
+  <div class="container">
+        <!-- Apparence -->
+    <div class="admin-section collapsed">
+      <div class="admin-section-title" onclick="toggleAdminSection(this)">🎨 Apparence<span class="admin-chevron">▾</span></div>
+      <div class="admin-section-body">
+        <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:14px">Personnalise l'apparence du site. Les changements s'appliquent immédiatement.</div>
+        <div style="display:flex;gap:8px;margin-bottom:20px">
+          <button class="btn-sm" id="themeBtnDark" onclick="setTheme('dark')" style="flex:1">🌙 Sombre</button>
+          <button class="btn-sm" id="themeBtnLight" onclick="setTheme('light')" style="flex:1">☀️ Clair</button>
+        </div>
+
+        <!-- Couleurs -->
+        <div class="apparence-sub">
+          <div class="apparence-sub-title" onclick="toggleApparenceSub(this)">🎨 Couleurs <span class="apparence-chevron">▾</span></div>
+          <div class="apparence-sub-body" id="themeVarsEditor"></div>
+        </div>
+
+        <!-- Typographie -->
+        <div class="apparence-sub">
+          <div class="apparence-sub-title" onclick="toggleApparenceSub(this)">🔤 Typographie <span class="apparence-chevron">▾</span></div>
+          <div class="apparence-sub-body" id="themeTypoEditor"></div>
+        </div>
+
+        <!-- Mise en page -->
+        <div class="apparence-sub">
+          <div class="apparence-sub-title" onclick="toggleApparenceSub(this)">📐 Mise en page <span class="apparence-chevron">▾</span></div>
+          <div class="apparence-sub-body" id="themeLayoutEditor"></div>
+        </div>
+
+        <button class="btn-sm ghost" style="margin-top:14px;width:100%" onclick="resetCurrentTheme()">↺ Réinitialiser ce thème</button>
+      </div>
+    </div>
+    <!-- Droits utilisateurs -->
+    <div class="admin-section">
+      <div class="admin-section-title" onclick="toggleAdminSection(this)">🔐 Droits utilisateurs<span class="admin-chevron">▾</span></div>
+      <div class="admin-section-body">
+        <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:12px">Configure qui peut effectuer chaque action. Les admins peuvent toujours tout faire.</div>
+        <div id="permissionsPanel"></div>
+      </div>
+    </div>
+    <!-- Liens d'invitation -->
+    <div class="admin-section collapsed">
+      <div class="admin-section-title" onclick="toggleAdminSection(this)">🔗 Liens d'invitation<span class="admin-chevron">▾</span></div>
+      <div class="admin-section-body">
+        <button class="btn-sm accent" onclick="createInvite()">Générer un lien</button>
+        <div id="inviteResult"></div>
+        <div id="invitesList" style="margin-top:16px"></div>
+      </div>
+    </div>
+    <!-- Récupération mot de passe -->
+    <div class="admin-section collapsed">
+      <div class="admin-section-title" onclick="toggleAdminSection(this)">🔑 Récupération mot de passe<span class="admin-chevron">▾</span></div>
+      <div class="admin-section-body">
+        <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:12px">Si tu perds ton mot de passe admin, ajoute <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">ADMIN_RESET_TOKEN=un-token-secret</code> dans ton <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">.env</code>, redémarre l'app, puis accède à :</div>
+        <code id="adminResetUrl" style="background:var(--surface2);padding:6px 10px;border-radius:6px;font-size:.75rem;display:block;word-break:break-all"></code>
+        <button class="btn-sm ghost" style="margin-top:8px" onclick="copyAdminResetUrl()">Copier l'URL</button>
+      </div>
+    </div>
+    <!-- Sauvegardes -->
+    <div class="admin-section collapsed" id="backupSection" style="display:none">
+      <div class="admin-section-title" onclick="toggleAdminSection(this)">💾 Sauvegardes<span class="admin-chevron">▾</span></div>
+      <div class="admin-section-body">
+        <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:10px">Backup automatique quotidien · 7 jours conservés</div>
+        <button class="btn-sm ghost" onclick="triggerBackup()" style="margin-bottom:12px">⚡ Backup maintenant</button>
+        <div id="backupList"></div>
+      </div>
+    </div>
+    <!-- Sélection des joueurs -->
+    <div class="admin-section collapsed">
+      <div class="admin-section-title" onclick="toggleAdminSection(this)">👥 Sélection des joueurs<span class="admin-chevron">▾</span></div>
+      <div class="admin-section-body">
+        <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:12px">Dans les créneaux du programme, quels joueurs afficher dans le sélecteur ?</div>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.85rem">
+          <input type="radio" name="playersScope" value="0" onchange="savePlayersScopeSetting(0)"> Tous les membres du site
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.85rem;margin-top:8px">
+          <input type="radio" name="playersScope" value="1" onchange="savePlayersScopeSetting(1)"> Uniquement les inscrits à la séance
+        </label>
+      </div>
+    </div>
+    <!-- Email -->
+    <div class="admin-section collapsed">
+      <div class="admin-section-title" onclick="toggleAdminSection(this)">📧 Email & Reset mot de passe<span class="admin-chevron">▾</span></div>
+      <div class="admin-section-body">
+        <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:14px">Permet aux utilisateurs de réinitialiser leur mot de passe par email. Nécessite une configuration SMTP dans le <code style="background:var(--surface2);padding:1px 5px;border-radius:3px">.env</code>.</div>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:14px">
+          <input type="checkbox" id="emailResetToggle" onchange="saveEmailResetSetting(this.checked)" style="width:16px;height:16px">
+          <span style="font-size:.85rem">Activer le reset par email</span>
+        </label>
+        <div id="emailSettingsPanel" style="display:none">
+          <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">Variables à configurer dans <code style="background:var(--surface2);padding:1px 5px;border-radius:3px">.env</code> :</div>
+          <div style="background:var(--surface2);border-radius:8px;padding:12px;font-size:.72rem;line-height:2;color:var(--text-soft)">
+            <code>SMTP_HOST</code> — ex: mail.infomaniak.com<br>
+            <code>SMTP_PORT</code> — ex: 587<br>
+            <code>SMTP_USER</code> — votre adresse email<br>
+            <code>SMTP_PASS</code> — votre mot de passe SMTP<br>
+            <code>SMTP_FROM</code> — adresse d'expéditeur<br>
+            <code>APP_URL</code> — ex: https://pandagaming.ch
+          </div>
+          <div style="margin-top:12px">
+            <label style="font-size:.75rem;display:block;margin-bottom:4px">Nom du site (dans les emails)</label>
+            <input type="text" id="siteNameInput" class="form-input" placeholder="GameDay" style="font-size:.8rem"
+              onchange="saveSiteName(this.value)">
+          </div>
+          <button class="btn-sm ghost" style="margin-top:10px" onclick="testEmailSMTP()">🧪 Tester la configuration SMTP</button>
+          <div id="smtpTestResult" style="margin-top:8px;font-size:.75rem"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Simulation de votes -->
+    <div class="admin-section collapsed">
+      <div class="admin-section-title" onclick="toggleAdminSection(this)">🤖 Simulation de votes<span class="admin-chevron">▾</span></div>
+      <div class="admin-section-body">
+        <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:12px">Active les boutons de simulation sur chaque séance (Claudia, Claudine, Claudette, Claude François).</div>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+          <input type="checkbox" id="simVotesToggle" onchange="toggleSimVotes(this.checked)" style="width:16px;height:16px">
+          <span style="font-size:.85rem">Activer la simulation de votes</span>
+        </label>
+      </div>
+    </div>
+    <!-- Utilisateurs -->
+    <div class="admin-section collapsed">
+      <div class="admin-section-title" onclick="toggleAdminSection(this)">👤 Utilisateurs<span class="admin-chevron">▾</span></div>
+      <div class="admin-section-body">
+        <div id="adminUsersList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div id="page-stats" class="page">
+  <div class="container">
+        <div id="statsContent"><div class="prog-loading"><div class="prog-loading-dot"></div><div class="prog-loading-dot"></div><div class="prog-loading-dot"></div><span>Chargement…</span></div></div>
+  </div>
+</div>
+
+
+<script src="/js/api.js"></script>
+<script src="/js/theme.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/home.js"></script>
+<script src="/js/session.js"></script>
+<script src="/js/proposals.js"></script>
+<script src="/js/vote.js"></script>
+<script src="/js/results.js"></script>
+<script src="/js/profile.js"></script>
+<script src="/js/programme.js"></script>
+<script src="/js/admin.js"></script>
+<script src="/js/archive.js"></script>
+<script src="/js/lightbox.js"></script>
+<script src="/js/doodle.js"></script>
+<script src="/js/app.js"></script>
+</script>
+<!-- MODAL EDIT SESSION -->
+<div class="modal-overlay" id="editSessionModal">
+  <div class="modal">
+    <div class="modal-title">✏️ Modifier la séance</div>
+    <div class="form-group">
+      <label class="form-label">Nom</label>
+      <input class="form-input" id="editSessName" placeholder="Nom de la séance">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Date</label>
+      <input type="date" class="form-input" id="editSessDate">
+    </div>
+    <div class="modal-btns">
+      <button class="btn-sm ghost" onclick="closeModal('editSessionModal')">Annuler</button>
+      <button class="btn-sm accent" onclick="saveEditSession()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MEMBRES PRIVÉS -->
+<div class="modal-overlay" id="privateMembersModal">
+  <div class="modal">
+    <div class="modal-title">👥 Membres de la séance privée</div>
+    <div id="privateMembersList" class="priv-members-list" style="margin:12px 0"></div>
+    <div style="font-size:.68rem;color:var(--text-muted);margin-bottom:12px">Le créateur est toujours inclus.</div>
+    <div class="modal-btns">
+      <button class="btn-sm ghost" onclick="closeModal('privateMembersModal')">Annuler</button>
+      <button class="btn-sm accent" onclick="savePrivateMembers()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lightboxOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:12px" onclick="closeLightbox()">
+  <button id="lbPrev" onclick="lbPrev(event)" style="display:none;position:fixed;left:16px;top:50%;transform:translateY(-50%);background:rgba(30,30,30,.88);border:2px solid rgba(255,255,255,.5);color:#fff;font-size:2.4rem;width:56px;height:56px;border-radius:50%;cursor:pointer;align-items:center;justify-content:center;z-index:10001;line-height:1;box-shadow:0 2px 16px rgba(0,0,0,.6)">&#8249;</button>
+  <img id="lightboxImg" src="" alt="" style="max-width:80vw;max-height:82vh;object-fit:contain;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.6)">
+  <video id="lightboxVideo" controls style="display:none;max-width:80vw;max-height:82vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.6)" onclick="event.stopPropagation()"></video>
+  <button id="lbNext" onclick="lbNext(event)" style="display:none;position:fixed;right:16px;top:50%;transform:translateY(-50%);background:rgba(30,30,30,.88);border:2px solid rgba(255,255,255,.5);color:#fff;font-size:2.4rem;width:56px;height:56px;border-radius:50%;cursor:pointer;align-items:center;justify-content:center;z-index:10001;line-height:1;box-shadow:0 2px 16px rgba(0,0,0,.6)">&#8250;</button>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+    <div id="lightboxCaption" style="color:#ccc;font-size:.85rem;text-align:center;max-width:80vw"></div>
+    <div id="lbCounter" style="color:#888;font-size:.72rem"></div>
+  </div>
+  <button onclick="closeLightbox()" style="position:fixed;top:16px;right:20px;background:none;border:none;color:#fff;font-size:2rem;cursor:pointer;line-height:1;opacity:.7">×</button>
+</div>
+
+<!-- Rankings popup modal -->
+<div id="rankingsPopup" class="modal-overlay">
+  <div class="modal" style="max-width:600px;max-height:80vh;overflow-y:auto">
+    <div class="modal-title">📊 Classements individuels</div>
+    <div id="rankingsPopupContent"></div>
+    <div class="modal-btns">
+      <button class="btn-sm ghost" onclick="closeModal('rankingsPopup')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- DOODLE PAGE -->
+<datalist id="slotTimeOptions"></datalist>
+<div id="page-doodle" class="page">
+  <div class="container">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div class="section-label" style="margin-bottom:0">📅 Sondages de dates</div>
+      <button class="btn-sm accent" onclick="showDoodleCreate()">+ Nouveau sondage</button>
+    </div>
+    <div id="doodleCreateForm" style="display:none" class="admin-section">
+      <div class="admin-section-title">Nouveau sondage</div>
+      <div class="form-group">
+        <label class="form-label">Titre de la séance</label>
+        <input class="form-input" id="doodleTitle" placeholder="ex: GameDay Printemps 2026">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Dates proposées <span style="font-size:.7rem;color:var(--text-muted)">(cliquez pour sélectionner plusieurs)</span></label>
+        <input type="date" class="form-input" id="doodleDatePicker" style="max-width:200px" onchange="doodleAddDate(this.value)">
+        <div id="doodleSelectedDates" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn-sm ghost" onclick="hideDoodleCreate()">Annuler</button>
+        <button class="btn-sm accent" onclick="createDoodle()">Créer le sondage</button>
+      </div>
+    </div>
+    <div id="doodleList"></div>
+    <div id="doodleDetail" style="display:none"></div>
+  </div>
+</div>
+
+</body>
+</html>
