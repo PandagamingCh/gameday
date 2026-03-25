@@ -271,3 +271,9 @@ npm audit fix
 ## Licence
 
 AGPL v3 — voir [LICENSE](./LICENSE)
+
+---
+
+## Remerciements
+
+Je voudrais remercier mon groupe de joueurs qui me subissent et à cause de qui j'ai décidé de créer ce projet, ainsi qu'Harm0 pour son précieux feedback.
