@@ -1,4 +1,4 @@
-# GameDay V3
+# GameDay V4
 
 Organisateur de journées jeux de société — propositions de jeux, votes, génération de programme.
 
