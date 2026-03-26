@@ -494,8 +494,8 @@ function initSlotDragDrop(list) {
 
     list.querySelectorAll('.slot-card').forEach(c => c.classList.remove('drag-over'));
 
-    // Recalculer les horaires et afficher immédiatement
-    recalcSlotTimes();
+    // Recalculer depuis le créneau le plus haut touché
+    recalcSlotTimes(Math.min(fromIdx, toIdx));
     renderSlots();
 
     // Sauvegarder en arrière-plan
@@ -737,6 +737,8 @@ async function saveSlot(idx) {
     const r = await api('POST', '/api/programme/slots', { ...slot, sessionId: currentSession.session.id, sort_order: idx });
     slot.id = r.id;
   }
+  // Recalculer les heures des créneaux suivants en cascade
+  recalcSlotTimes(idx + 1);
   updateSlotView(idx);
   toggleSlotEdit(idx, false);
 }
@@ -786,8 +788,8 @@ async function moveSlot(idx, dir) {
   const newIdx = idx + dir;
   if (newIdx < 0 || newIdx >= programmeSlots.length) return;
   [programmeSlots[idx], programmeSlots[newIdx]] = [programmeSlots[newIdx], programmeSlots[idx]];
-  // Recalculer et afficher immédiatement
-  recalcSlotTimes();
+  // Recalculer depuis le créneau le plus haut touché
+  recalcSlotTimes(Math.min(idx, newIdx));
   renderSlots();
   // Sauvegarder en arrière-plan
   const reorder = programmeSlots.map((s, i) => ({ id: s.id, sort_order: i })).filter(s => s.id);
@@ -797,23 +799,36 @@ async function moveSlot(idx, dir) {
   }
 }
 
-function recalcSlotTimes() {
+// recalcSlotTimes(fromIdx) — recalcule les heures en cascade à partir de fromIdx.
+// Les créneaux avant fromIdx ne sont pas touchés.
+// Si fromIdx est 0 ou omis, utilise progStart comme ancre.
+function recalcSlotTimes(fromIdx = 0) {
   if (!programmeSlots.length) return;
-  // Utiliser l'heure de début de la journée comme ancre fixe
-  const startInput = document.getElementById('progStart');
-  let cursor = startInput?.value?.trim() || null;
-  // Fallback : premier créneau non-vide
-  if (!cursor) {
-    for (const s of programmeSlots) {
-      if (s.start_time && s.start_time.trim()) { cursor = s.start_time; break; }
+
+  let cursor;
+  if (fromIdx === 0) {
+    // Ancre = heure de début de journée ou heure du premier créneau
+    const startInput = document.getElementById('progStart');
+    cursor = startInput?.value?.trim() || null;
+    if (!cursor) {
+      for (const s of programmeSlots) {
+        if (s.start_time && s.start_time.trim()) { cursor = s.start_time; break; }
+      }
     }
+  } else {
+    // Ancre = heure du créneau précédent + sa durée
+    const prev = programmeSlots[fromIdx - 1];
+    if (!prev || !prev.start_time) return;
+    const dur = prev.duration_est || prev.duration_min || 60;
+    const durB = prev.duration_est_b || prev.duration_min_b || (prev.game_name_b ? dur : 0);
+    const durC = prev.duration_est_c || prev.duration_min_c || (prev.game_name_c ? dur : 0);
+    cursor = addMinutes(prev.start_time, Math.max(dur, durB, durC));
   }
   if (!cursor) return;
 
-  for (let i = 0; i < programmeSlots.length; i++) {
+  for (let i = fromIdx; i < programmeSlots.length; i++) {
     const s = programmeSlots[i];
     s.start_time = cursor;
-    // Mettre à jour directement dans le DOM si la carte existe
     const card = document.querySelector(`.slot-card[data-id="${s.id}"]`);
     if (card) {
       const timeEl = card.querySelector('.slot-time');
@@ -821,12 +836,10 @@ function recalcSlotTimes() {
       const stInput = card.querySelector(`input[id^="st_"]`);
       if (stInput) stInput.value = cursor;
     }
-    // Calculer la durée de ce créneau
     const dur = s.duration_est || s.duration_min || 60;
     const durB = s.duration_est_b || s.duration_min_b || (s.game_name_b ? dur : 0);
     const durC = s.duration_est_c || s.duration_min_c || (s.game_name_c ? dur : 0);
-    const slotDur = Math.max(dur, durB, durC);
-    cursor = addMinutes(cursor, slotDur);
+    cursor = addMinutes(cursor, Math.max(dur, durB, durC));
   }
 }
 
