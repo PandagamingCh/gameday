@@ -14,10 +14,12 @@ Développé pour [pandagaming.ch](https://pandagaming.ch) · Licence AGPL v3
 - [Premier lancement](#premier-lancement)
 - [Fonctionnalités](#fonctionnalités)
 - [Variables d'environnement](#variables-denvironnement)
+- [Obtenir un token BGG](#obtenir-un-token-bgg)
 - [Récupération du compte admin](#récupération-du-compte-admin)
 - [Tests](#tests)
 - [Architecture](#architecture)
 - [Sécurité](#sécurité)
+- [Remerciements](#remerciements)
 - [Licence](#licence)
 
 ---
@@ -40,6 +42,16 @@ node server.js
 ```
 
 L'application est accessible sur `http://localhost:3000`
+
+### Contenu du fichier .env
+
+```env
+SESSION_SECRET=une-longue-chaine-aleatoire-et-secrete
+ADMIN_PASSWORD=votre-mot-de-passe-admin
+DB_PATH=/chemin/vers/data/gameday.db   # optionnel
+ANTHROPIC_API_KEY=                     # optionnel — active la génération IA
+BGG_TOKEN=                             # optionnel — active la sync BGG
+```
 
 ---
 
@@ -192,7 +204,7 @@ Les nouveaux utilisateurs s'inscrivent uniquement via un lien d'invitation valid
 | **Programme IA** | Génération automatique via Claude (nécessite `ANTHROPIC_API_KEY`) |
 | **Archives** | Compte-rendu, photos, scores des parties jouées |
 | **Doodle** | Sondages de disponibilité pour planifier la date |
-| **BGG** | Synchronisation automatique des collections BoardGameGeek |
+| **BGG** | Synchronisation automatique des collections BoardGameGeek (nécessite `BGG_TOKEN`) |
 
 ---
 
@@ -202,6 +214,7 @@ Les nouveaux utilisateurs s'inscrivent uniquement via un lien d'invitation valid
 |----------|-------------|-------------|
 | `SESSION_SECRET` | ✅ en prod | Clé de chiffrement des sessions (chaîne aléatoire longue) |
 | `ADMIN_PASSWORD` | ✅ en prod | Mot de passe du compte admin (défaut : `admin`) |
+| `BGG_TOKEN` | ❌ optionnel | Token Bearer BGG — active la synchronisation des collections (voir section dédiée) |
 | `ANTHROPIC_API_KEY` | ❌ optionnel | Active la génération IA du programme |
 | `ADMIN_RESET_TOKEN` | ❌ optionnel | Token pour récupérer l'accès admin (voir ci-dessous) |
 | `SMTP_HOST` | ❌ optionnel | Serveur SMTP pour le reset de mot de passe par email |
@@ -211,7 +224,41 @@ Les nouveaux utilisateurs s'inscrivent uniquement via un lien d'invitation valid
 | `SMTP_PASS` | ❌ optionnel | Mot de passe SMTP |
 | `SMTP_FROM` | ❌ optionnel | Adresse expéditeur des emails |
 | `APP_URL` | ❌ optionnel | URL publique du site (pour les liens dans les emails) |
+| `DB_PATH` | ❌ optionnel | Chemin vers la base de données SQLite (défaut : `./data/gameday.db`) |
 | `PORT` | ❌ optionnel | Port d'écoute (défaut : 3000) |
+
+---
+
+## Obtenir un token BGG
+
+Les fonctionnalités BGG (synchronisation de collections, recherche de jeux, récupération des données) nécessitent un token Bearer de BoardGameGeek.
+
+### 1. Créer un compte BGG
+
+Si vous n'en avez pas, créez un compte sur [boardgamegeek.com](https://boardgamegeek.com).
+
+### 2. Enregistrer votre application
+
+Rendez-vous sur [boardgamegeek.com/applications](https://boardgamegeek.com/applications) et cliquez sur **Create Application**.
+
+Remplissez le formulaire :
+- **Name** : GameDay (ou le nom de votre instance)
+- **Type** : Non-commercial (si usage privé/communautaire sans publicité ni paiement)
+- **Description** : Organisateur de journées jeux de société pour usage privé
+
+> BGG traite les demandes manuellement — comptez **1 à 2 semaines** avant d'obtenir une réponse.
+
+### 3. Créer un token
+
+Une fois votre application approuvée, retournez sur [boardgamegeek.com/applications](https://boardgamegeek.com/applications) et cliquez sur **Tokens** à côté de votre application, puis créez un token.
+
+### 4. Ajouter le token au .env
+
+```env
+BGG_TOKEN=votre-token-bearer-ici
+```
+
+Sans ce token, les fonctionnalités BGG seront automatiquement masquées dans l'interface.
 
 ---
 
@@ -268,12 +315,14 @@ npm audit fix
 
 ---
 
-## Licence
+## Remerciements
 
-AGPL v3 — voir [LICENSE](./LICENSE)
+Merci aux joueurs de pandagaming.ch pour leurs tests et suggestions,
+et à Harm0 pour ses retours constructifs qui ont permis d'améliorer
+l'architecture et la qualité du projet. 🐼🎲
 
 ---
 
-## Remerciements
+## Licence
 
-Je voudrais remercier mon groupe de joueurs qui me subissent et à cause de qui j'ai décidé de créer ce projet, ainsi qu'Harm0 pour son précieux feedback.
+AGPL v3 — voir [LICENSE](./LICENSE)
