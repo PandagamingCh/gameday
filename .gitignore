@@ -1,0 +1,23 @@
+# Dépendances
+node_modules/
+
+# Environnement (ne jamais versionner les vrais credentials)
+.env
+!.env.test
+
+# Base de données
+data/*.db
+data/*.db-shm
+data/*.db-wal
+
+# Uploads utilisateurs
+public/uploads/*
+!public/uploads/.gitkeep
+
+# Artefacts de test
+playwright-report/
+test-results/
+
+# Divers
+.DS_Store
+*.log

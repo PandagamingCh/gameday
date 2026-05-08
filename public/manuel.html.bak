@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GameDay — Mode d'emploi</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0e0b; --surface: #1a1814; --surface2: #222019;
+    --border: #2e2c24; --accent: #e8b84b; --accent2: #c47a3a;
+    --text: #f0ead8; --text-muted: #6a6458; --text-soft: #a09880;
+    --green-text: #70c090; --red-text: #c07070;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Mono', monospace; font-size: 14px; line-height: 1.7; min-height: 100vh; }
+  .wrapper { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+  .sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; background: var(--surface); border-right: 1px solid var(--border); padding: 32px 0; scrollbar-width: none; }
+  .sidebar::-webkit-scrollbar { display: none; }
+  .sidebar-logo { font-family: 'Fraunces', serif; font-size: 1.8rem; font-weight: 900; color: var(--accent); letter-spacing: -1px; padding: 0 24px 24px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .sidebar-logo em { color: var(--text-muted); font-weight: 300; font-style: italic; }
+  .sidebar-logo small { display: block; font-size: .6rem; font-weight: 400; color: var(--text-muted); letter-spacing: 3px; text-transform: uppercase; margin-top: 2px; font-family: 'DM Mono', monospace; }
+  .nav-section { padding: 8px 0; }
+  .nav-section-title { font-size: .58rem; text-transform: uppercase; letter-spacing: 3px; color: var(--text-muted); padding: 4px 24px 6px; }
+  .nav-link { display: flex; align-items: center; gap: 10px; padding: 7px 24px; color: var(--text-soft); text-decoration: none; font-size: .75rem; transition: all .15s; border-left: 2px solid transparent; cursor: pointer; }
+  .nav-link:hover { color: var(--text); background: var(--surface2); }
+  .nav-link.active { color: var(--accent); border-left-color: var(--accent); background: rgba(232,184,75,.06); }
+  .content { padding: 60px 80px; max-width: 860px; }
+  .page-header { margin-bottom: 56px; }
+  .page-tag { font-size: .62rem; text-transform: uppercase; letter-spacing: 4px; color: var(--accent2); margin-bottom: 12px; }
+  .page-title { font-family: 'Fraunces', serif; font-size: 3rem; font-weight: 900; color: var(--text); line-height: 1.1; letter-spacing: -1px; }
+  .page-title em { color: var(--accent); font-style: italic; font-weight: 300; }
+  .page-subtitle { margin-top: 16px; color: var(--text-muted); font-size: .82rem; max-width: 540px; line-height: 1.8; }
+  .section { margin-bottom: 64px; scroll-margin-top: 32px; }
+  .section-header { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .section-icon { width: 36px; height: 36px; background: rgba(232,184,75,.1); border: 1px solid rgba(232,184,75,.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+  .section-title { font-family: 'Fraunces', serif; font-size: 1.4rem; font-weight: 700; color: var(--text); }
+  .section-num { font-family: 'Fraunces', serif; font-size: .75rem; color: var(--text-muted); font-style: italic; }
+  .subsection { margin-bottom: 32px; }
+  .subsection-title { font-size: .72rem; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); margin-bottom: 12px; }
+  p { color: var(--text-soft); margin-bottom: 12px; font-size: .82rem; }
+  .steps { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
+  .step { display: flex; gap: 16px; align-items: flex-start; padding: 14px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+  .step:hover { border-color: rgba(232,184,75,.3); }
+  .step-num { width: 22px; height: 22px; background: rgba(232,184,75,.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .65rem; font-weight: 700; color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+  .step-text { font-size: .8rem; color: var(--text-soft); line-height: 1.6; }
+  .step-text strong { color: var(--text); font-weight: 500; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+  .card { padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+  .card-title { font-size: .78rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .card-body { font-size: .74rem; color: var(--text-muted); line-height: 1.6; }
+  .tip { display: flex; gap: 12px; padding: 14px 16px; margin: 16px 0; border-radius: 8px; font-size: .78rem; line-height: 1.6; }
+  .tip-info { background: rgba(232,184,75,.07); border: 1px solid rgba(232,184,75,.2); color: var(--text-soft); }
+  .tip-warn { background: rgba(196,122,58,.07); border: 1px solid rgba(196,122,58,.25); color: var(--text-soft); }
+  .tip-ai { background: rgba(100,80,180,.1); border: 1px solid rgba(150,120,220,.25); color: var(--text-soft); }
+  .tip-icon { font-size: 1rem; flex-shrink: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: .78rem; }
+  th { text-align: left; padding: 8px 12px; font-size: .62rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+  td { padding: 10px 12px; border-bottom: 1px solid rgba(46,44,36,.5); color: var(--text-soft); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { color: var(--text); font-weight: 500; }
+  .rules { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
+  .rule { display: flex; gap: 12px; align-items: flex-start; padding: 10px 14px; border-radius: 6px; font-size: .78rem; }
+  .rule-p1 { background: rgba(122,58,58,.12); border-left: 3px solid var(--red-text); }
+  .rule-p2 { background: rgba(232,184,75,.07); border-left: 3px solid var(--accent); }
+  .rule-p3 { background: rgba(58,122,80,.08); border-left: 3px solid var(--green-text); }
+  .rule-label { font-size: .6rem; text-transform: uppercase; letter-spacing: 2px; flex-shrink: 0; margin-top: 2px; }
+  .rule-p1 .rule-label { color: var(--red-text); }
+  .rule-p2 .rule-label { color: var(--accent); }
+  .rule-p3 .rule-label { color: var(--green-text); }
+  .rule-text { color: var(--text-soft); line-height: 1.5; }
+  .divider { height: 1px; background: var(--border); margin: 48px 0; }
+  .footer { margin-top: 80px; padding-top: 24px; border-top: 1px solid var(--border); font-size: .7rem; color: var(--text-muted); display: flex; justify-content: space-between; }
+  kbd { display: inline-block; padding: 1px 6px; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; font-size: .7rem; color: var(--text-soft); }
+  .ai-badge { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 4px; font-size: .68rem; background: rgba(150,120,220,.15); color: #b8a0ff; border: 1px solid rgba(150,120,220,.3); margin-left: 6px; }
+  .env-block { background: var(--surface2); border-radius: 8px; padding: 14px 16px; font-size: .72rem; line-height: 2.2; color: var(--text-soft); margin: 12px 0; }
+  .env-block code { color: var(--accent); }
+  @media (max-width: 768px) { .wrapper { grid-template-columns: 1fr; } .sidebar { display: none; } .content { padding: 32px 20px; } .cards { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <nav class="sidebar">
+    <div class="sidebar-logo">Game<em>Day</em><small>Mode d'emploi v3.4</small></div>
+    <div class="nav-section">
+      <div class="nav-section-title">Installation</div>
+      <a class="nav-link" href="#prerequis">📦 Prérequis</a>
+      <a class="nav-link" href="#installation">🚀 Installation</a>
+      <a class="nav-link" href="#configuration">⚙️ Configuration</a>
+      <a class="nav-link" href="#ia-setup">✨ Configurer l'IA</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Utilisation</div>
+      <a class="nav-link" href="#compte">👤 Créer un compte</a>
+      <a class="nav-link" href="#seances">📅 Séances</a>
+      <a class="nav-link" href="#proposer">🎮 Proposer des jeux</a>
+      <a class="nav-link" href="#voter">🗳 Voter</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Programme</div>
+      <a class="nav-link" href="#programme">📋 Édition manuelle</a>
+      <a class="nav-link" href="#ia">✨ Génération IA</a>
+      <a class="nav-link" href="#regles">📐 Règles IA</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Outils</div>
+      <a class="nav-link" href="#doodle">📆 Doodle</a>
+      <a class="nav-link" href="#archive">📚 Archive</a>
+      <a class="nav-link" href="#admin">⚙️ Administration</a>
+    </div>
+  </nav>
+
+  <main class="content">
+    <div class="page-header">
+      <div class="page-tag">Documentation · v3.4</div>
+      <h1 class="page-title">Game<em>Day</em></h1>
+      <p class="page-subtitle">Organisateur de journées jeux de société. Ce guide couvre l'installation, la configuration et toutes les fonctionnalités.</p>
+    </div>
+
+    <!-- PRÉREQUIS -->
+    <section class="section" id="prerequis">
+      <div class="section-header">
+        <div class="section-icon">📦</div>
+        <div><div class="section-num">01</div><div class="section-title">Prérequis</div></div>
+      </div>
+      <div class="cards">
+        <div class="card">
+          <div class="card-title">Runtime</div>
+          <div class="card-body">Node.js v18 ou supérieur · npm</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Système</div>
+          <div class="card-body">Accès en écriture pour la DB SQLite · Persistance des données entre redémarrages</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Réseau sortant</div>
+          <div class="card-body">boardgamegeek.com (API BGG) · api.anthropic.com (IA, optionnel) · Serveur SMTP (email, optionnel)</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Hébergement compatible</div>
+          <div class="card-body">VPS · Serveur dédié · Docker ✅ — Vercel/Netlify ❌ (serverless incompatible)</div>
+        </div>
+      </div>
+      <div class="tip tip-info">
+        <span class="tip-icon">💡</span>
+        <span>Minimum recommandé : 256 MB RAM. Pas besoin de MySQL, Redis ou autre base externe — GameDay utilise SQLite.</span>
+      </div>
+    </section>
+
+    <!-- INSTALLATION -->
+    <section class="section" id="installation">
+      <div class="section-header">
+        <div class="section-icon">🚀</div>
+        <div><div class="section-num">02</div><div class="section-title">Installation</div></div>
+      </div>
+      <div class="subsection">
+        <div class="subsection-title">Avec Docker (recommandé)</div>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-text">Copiez le dossier du projet sur votre serveur.</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Copiez <kbd>.env.example</kbd> en <kbd>.env</kbd> et remplissez les valeurs (voir Configuration).</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-text">Lancez : <kbd>docker compose up -d</kbd></div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-text">L'application est accessible sur le port <kbd>3000</kbd> (ou celui configuré).</div></div>
+        </div>
+      </div>
+      <div class="subsection">
+        <div class="subsection-title">Sans Docker</div>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-text">Installez les dépendances : <kbd>npm install</kbd></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Copiez <kbd>.env.example</kbd> en <kbd>.env</kbd> et configurez.</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-text">Démarrez : <kbd>node server.js</kbd> (ou via PM2 pour la production)</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONFIGURATION -->
+    <section class="section" id="configuration">
+      <div class="section-header">
+        <div class="section-icon">⚙️</div>
+        <div><div class="section-num">03</div><div class="section-title">Configuration</div></div>
+      </div>
+      <p>Toutes les variables se configurent dans le fichier <kbd>.env</kbd> à la racine du projet.</p>
+      <table>
+        <thead><tr><th>Variable</th><th>Description</th><th>Requis</th></tr></thead>
+        <tbody>
+          <tr><td>SESSION_SECRET</td><td>Clé secrète pour les sessions — changez cette valeur !</td><td>✅ Oui</td></tr>
+          <tr><td>ADMIN_RESET_TOKEN</td><td>Token pour récupérer l'accès admin en cas de perte de mot de passe</td><td>Non</td></tr>
+          <tr><td>ANTHROPIC_API_KEY</td><td>Clé API Anthropic pour la génération IA du programme</td><td>Version IA</td></tr>
+          <tr><td>SMTP_HOST</td><td>Serveur SMTP pour les emails (ex: mail.infomaniak.com)</td><td>Non</td></tr>
+          <tr><td>SMTP_PORT</td><td>Port SMTP (ex: 587)</td><td>Non</td></tr>
+          <tr><td>SMTP_USER</td><td>Adresse email d'envoi</td><td>Non</td></tr>
+          <tr><td>SMTP_PASS</td><td>Mot de passe SMTP</td><td>Non</td></tr>
+          <tr><td>SMTP_FROM</td><td>Adresse d'expéditeur affichée</td><td>Non</td></tr>
+          <tr><td>APP_URL</td><td>URL publique du site (ex: https://monsite.ch)</td><td>Non</td></tr>
+          <tr><td>PORT</td><td>Port du serveur (défaut: 3000)</td><td>Non</td></tr>
+          <tr><td>DB_PATH</td><td>Chemin vers la base de données SQLite</td><td>Non</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- IA SETUP -->
+    <section class="section" id="ia-setup">
+      <div class="section-header">
+        <div class="section-icon">✨</div>
+        <div><div class="section-num">04</div><div class="section-title">Configurer l'IA <span class="ai-badge">✨ IA</span></div></div>
+      </div>
+      <p>GameDay utilise l'API Anthropic (Claude) pour deux fonctionnalités : la génération automatique du programme et l'estimation des durées. Ces fonctionnalités sont optionnelles — le site fonctionne entièrement sans.</p>
+
+      <div class="subsection">
+        <div class="subsection-title">Fonctions utilisant l'IA</div>
+        <div class="cards">
+          <div class="card">
+            <div class="card-title">✨ Génération du programme</div>
+            <div class="card-body">Génère automatiquement un programme de journée optimisé selon les votes, les contraintes de joueurs et les teachers. Utilise <strong>Claude Sonnet</strong> (mode libre) ou <strong>Claude Haiku</strong> (mode guidé).</div>
+          </div>
+          <div class="card">
+            <div class="card-title">⏱ Estimation des durées</div>
+            <div class="card-body">Estime automatiquement la durée d'un créneau en fonction du jeu, du nombre de joueurs et du teaching. Utilise <strong>Claude Haiku</strong> pour rester économique.</div>
+          </div>
+        </div>
+        <div class="tip tip-ai">
+          <span class="tip-icon">✨</span>
+          <span>L'IA génère un programme en JSON structuré, puis le serveur vérifie et corrige automatiquement les violations de règles (teacher absent de sa table, joueur sur deux tables, etc.) avec jusqu'à 2 itérations de correction.</span>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">Obtenir une clé API Anthropic</div>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-text">Créez un compte sur <strong>console.anthropic.com</strong></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Dans Settings → API Keys, créez une nouvelle clé</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-text">Ajoutez-la dans votre <kbd>.env</kbd> : <kbd>ANTHROPIC_API_KEY=sk-ant-...</kbd></div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-text">Redémarrez l'application — le bouton "Générer avec l'IA" apparaît dans l'onglet Programme</div></div>
+        </div>
+      </div>
+
+      <div class="tip tip-warn">
+        <span class="tip-icon">💸</span>
+        <span>L'usage de l'API Anthropic est payant. Une génération de programme coûte typiquement moins de 0.01 CHF en mode guidé (Haiku) et ~0.05 CHF en mode libre (Sonnet).</span>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- COMPTE -->
+    <section class="section" id="compte">
+      <div class="section-header">
+        <div class="section-icon">👤</div>
+        <div><div class="section-num">05</div><div class="section-title">Créer un compte</div></div>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-text">Obtenez un <strong>lien d'invitation</strong> auprès d'un administrateur. Ce lien est unique et à usage unique.</div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-text">Renseignez votre <strong>pseudo</strong> et <strong>mot de passe</strong>. Optionnellement : votre pseudo BoardGameGeek.</div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-text">Dans votre <strong>Profil</strong>, synchronisez votre collection BGG pour accéder à vos jeux lors des propositions.</div></div>
+      </div>
+      <div class="tip tip-info">
+        <span class="tip-icon">📧</span>
+        <span>Si le reset par email est activé par l'admin, renseignez votre adresse email dans votre profil pour pouvoir réinitialiser votre mot de passe vous-même.</span>
+      </div>
+    </section>
+
+    <!-- SÉANCES -->
+    <section class="section" id="seances">
+      <div class="section-header">
+        <div class="section-icon">📅</div>
+        <div><div class="section-num">06</div><div class="section-title">Gérer les séances</div></div>
+      </div>
+      <p>Depuis l'accueil, cliquez <strong>+ Créer une nouvelle séance</strong>. Renseignez le nom, la date et créez des catégories de jeux. Les admins peuvent créer des séances privées visibles uniquement par les membres invités.</p>
+      <p>Les cartes de séances affichent des bandeaux d'alerte : 🔵 vote manquant ou incomplet · 🟠 nouveaux jeux proposés depuis votre dernier vote.</p>
+      <p>L'admin et le créateur de séance peuvent <strong>retirer un participant</strong> en cliquant le × à droite de son nom dans la barre des participants.</p>
+    </section>
+
+    <!-- PROPOSER -->
+    <section class="section" id="proposer">
+      <div class="section-header">
+        <div class="section-icon">🎮</div>
+        <div><div class="section-num">07</div><div class="section-title">Proposer des jeux</div></div>
+      </div>
+      <p>Dans l'onglet <strong>Proposer</strong> : depuis votre collection BGG synchronisée, ou en ajout manuel via URL BoardGameGeek. Cliquez ✏️ pour modifier une proposition, changer le teacher, définir la durée de teaching, ou rafraîchir les données BGG avec 🔄.</p>
+      <p>Le bouton <strong>⭐ Enrichir BGG</strong> (admin uniquement) met à jour les notes et weights BGG de tous les jeux proposés dans la séance.</p>
+    </section>
+
+    <!-- VOTER -->
+    <section class="section" id="voter">
+      <div class="section-header">
+        <div class="section-icon">🗳</div>
+        <div><div class="section-num">08</div><div class="section-title">Voter</div></div>
+      </div>
+      <p>Classez les jeux par ordre de préférence par catégorie via glisser-déposer. Validez avec <strong>✓ Valider mon classement</strong>. Les scores Borda sont visibles en temps réel dans l'onglet Résultats. L'organisateur peut verrouiller les votes (🔒).</p>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- PROGRAMME -->
+    <section class="section" id="programme">
+      <div class="section-header">
+        <div class="section-icon">📋</div>
+        <div><div class="section-num">09</div><div class="section-title">Édition manuelle du programme</div></div>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-text">Cliquez <strong>+ Créneau</strong> pour ajouter un créneau.</div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-text">Cliquez ▸ pour éditer — choisissez le jeu depuis les jeux votés, les collections, ou BGG. Ajoutez des tables B/C pour les créneaux parallèles.</div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-text">Glissez ⠿ pour réordonner — les horaires se recalculent automatiquement depuis l'heure de début.</div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-text">Cliquez <strong>📊 Voir les classements individuels</strong> pour voir les préférences de chaque joueur pendant l'édition.</div></div>
+        <div class="step"><div class="step-num">5</div><div class="step-text">Publiez avec <strong>✅ Valider & publier</strong> — une page publique est générée à <kbd>/programme/ID</kbd>.</div></div>
+      </div>
+    </section>
+
+    <!-- IA GÉNÉRATION -->
+    <section class="section" id="ia">
+      <div class="section-header">
+        <div class="section-icon">✨</div>
+        <div><div class="section-num">10</div><div class="section-title">Génération IA <span class="ai-badge">✨ IA</span></div></div>
+      </div>
+      <div class="tip tip-ai">
+        <span class="tip-icon">✨</span>
+        <span>Cette fonctionnalité nécessite une clé <kbd>ANTHROPIC_API_KEY</kbd> dans la configuration. Elle est absente de la version "sans IA".</span>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">Mode guidé — Claude Haiku</div>
+        <p>Renseignez les horaires, la pause déjeuner, le nombre de tables maximum et le nombre de créneaux tous ensemble vs en parallèle. L'IA génère un programme structuré rapidement et à moindre coût.</p>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">Mode libre — Claude Sonnet</div>
+        <p>Décrivez librement le programme en langage naturel. Plus puissant pour les contraintes complexes.</p>
+        <div class="tip tip-ai">
+          <span class="tip-icon">✍️</span>
+          <span><em>"2 créneaux tous ensemble le matin, 2 créneaux de 2 tables l'après-midi. Ramses ne joue pas à White Castle."</em></span>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">Processus de génération</div>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-text"><strong>Pré-calcul</strong> — le serveur calcule les contraintes (temps disponible, répartition idéale, teachers) et les injecte dans le prompt.</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text"><strong>Génération</strong> — Claude produit un programme JSON structuré respectant les règles.</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-text"><strong>Vérification</strong> — le serveur vérifie les règles P1/P2. Si violations détectées, Claude reçoit les erreurs et corrige (max 2 itérations).</div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-text"><strong>Post-traitement</strong> — le serveur injecte les teachers manquants, redistribue équitablement les joueurs et filtre les créneaux invalides.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RÈGLES -->
+    <section class="section" id="regles">
+      <div class="section-header">
+        <div class="section-icon">📐</div>
+        <div><div class="section-num">11</div><div class="section-title">Règles du programme IA <span class="ai-badge">✨ IA</span></div></div>
+      </div>
+      <div class="rules">
+        <div class="rule rule-p1"><div class="rule-label">P1</div><div class="rule-text">Le <strong>teacher est dans les joueurs</strong> de sa table — garanti par le serveur</div></div>
+        <div class="rule rule-p1"><div class="rule-label">P1</div><div class="rule-text">Un joueur ne peut être que sur <strong>une seule table</strong> par créneau — garanti par le serveur</div></div>
+        <div class="rule rule-p1"><div class="rule-label">P1</div><div class="rule-text">Les joueurs jouent idéalement au jeu qu'ils ont <strong>le plus voté</strong></div></div>
+        <div class="rule rule-p2"><div class="rule-label">P2</div><div class="rule-text">Respecter exactement le <strong>nombre de créneaux</strong> tous ensemble / en parallèle demandé</div></div>
+        <div class="rule rule-p2"><div class="rule-label">P2</div><div class="rule-text">Respecter les contraintes <strong>min/max joueurs</strong> de chaque jeu</div></div>
+        <div class="rule rule-p2"><div class="rule-label">P2</div><div class="rule-text"><strong>Tous les participants jouent</strong> à chaque créneau</div></div>
+        <div class="rule rule-p2"><div class="rule-label">P2</div><div class="rule-text">Tables parallèles avec <strong>durées synchronisées</strong> et écart max 1 joueur</div></div>
+        <div class="rule rule-p3"><div class="rule-label">P3</div><div class="rule-text">Un joueur ne devrait pas être teacher sur plus de <strong>3 jeux</strong> dans la journée</div></div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- DOODLE -->
+    <section class="section" id="doodle">
+      <div class="section-header">
+        <div class="section-icon">📆</div>
+        <div><div class="section-num">12</div><div class="section-title">Sondage Doodle</div></div>
+      </div>
+      <p>Sondez les disponibilités avant de fixer une date. Créez un sondage, partagez le lien, puis validez la date finale — une séance est automatiquement créée et les participants disponibles sont inscrits.</p>
+    </section>
+
+    <!-- ARCHIVE -->
+    <section class="section" id="archive">
+      <div class="section-header">
+        <div class="section-icon">📚</div>
+        <div><div class="section-num">13</div><div class="section-title">Archive & Compte rendu</div></div>
+      </div>
+      <div class="cards">
+        <div class="card"><div class="card-title">📷 Médias</div><div class="card-body">Photos et vidéos de la séance.</div></div>
+        <div class="card"><div class="card-title">🏆 Scores</div><div class="card-body">Scores de chaque partie jouée.</div></div>
+        <div class="card"><div class="card-title">📝 Notes</div><div class="card-body">Notes générales sur la séance.</div></div>
+        <div class="card"><div class="card-title">📊 Stats</div><div class="card-body">Alimentent les statistiques globales du site.</div></div>
+      </div>
+    </section>
+
+    <!-- ADMIN -->
+    <section class="section" id="admin">
+      <div class="section-header">
+        <div class="section-icon">⚙️</div>
+        <div><div class="section-num">14</div><div class="section-title">Administration</div></div>
+      </div>
+      <table>
+        <thead><tr><th>Section</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>🎨 Apparence</td><td>Thème sombre/clair, couleurs, polices, mise en page — persistés pour tous les utilisateurs.</td></tr>
+          <tr><td>🔐 Droits</td><td>Qui peut effectuer chaque action : tous / créateur / admin.</td></tr>
+          <tr><td>📧 Email</td><td>Activer le reset de mot de passe par email. Nécessite configuration SMTP dans <kbd>.env</kbd>.</td></tr>
+          <tr><td>🔗 Invitations</td><td>Générer des liens d'invitation à usage unique.</td></tr>
+          <tr><td>🔑 Récupération</td><td>URL de récupération du mot de passe admin via <kbd>ADMIN_RESET_TOKEN</kbd>.</td></tr>
+          <tr><td>💾 Sauvegardes</td><td>Backup manuel ou automatique quotidien, 7 jours de rétention.</td></tr>
+          <tr><td>👥 Sélection joueurs</td><td>Sélecteur de joueurs dans les créneaux : tous les membres ou inscrits à la séance.</td></tr>
+          <tr><td>🤖 Simulation</td><td>Boutons de simulation de votes pour tester (Claudia, Claudine, Claudette, Claude François).</td></tr>
+          <tr><td>👤 Utilisateurs</td><td>Gérer les comptes, droits, mots de passe.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <div class="footer">
+      <span>GameDay v3.4 · Licence AGPL v3 · pandagaming.ch</span>
+      <span>Généré automatiquement</span>
+    </div>
+  </main>
+</div>
+
+<script>
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const a = document.querySelector(`.nav-link[href="#${entry.target.id}"]`);
+        if (a) a.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => observer.observe(s));
+  navLinks.forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const id = link.getAttribute('href').slice(1);
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+</script>
+</body>
+</html>
